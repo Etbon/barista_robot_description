@@ -1,0 +1,538 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="barista_robot">
+
+  <!-- Global Material Definitions -->
+  <material name="Red">
+    <color rgba="1.0 0.0 0.0 1.0"/>
+  </material>
+
+  <material name="Blue">
+    <color rgba="0.0 0.0 1.0 1.0"/>
+  </material>
+
+  <material name="Black">
+    <color rgba="0.0 0.0 0.0 1.0"/>
+  </material>
+
+  <material name="Green">
+    <color rgba="0.0 1.0 0.0 1.0"/>
+  </material>
+
+  <material name="LightNavyBlue">
+    <color rgba="0.2 0.2 0.7 1.0"/>
+  </material>
+
+  <material name="Gray">
+    <color rgba="0.5 0.5 0.5 1.0"/>
+  </material>
+
+  <material name="White">
+    <color rgba="1.0 1.0 1.0 1.0"/>
+  </material>
+
+  <material name="Purple">
+    <color rgba="0.5 0.0 0.5 1.0"/>
+  </material>
+
+  <material name="Yellow">
+    <color rgba="1.0 1.0 0.0 1.0"/>
+  </material>
+
+  <!-- Properties -->
+  <xacro:property name="body_radius" value="0.178"/>
+  <xacro:property name="body_length" value="0.155"/>
+  <xacro:property name="cup_holder_tray_radius" value="0.16"/>
+  <xacro:property name="cup_holder_tray_length" value="0.09"/>
+  <xacro:property name="standoff_rods_radius" value="0.01"/>
+  <xacro:property name="standoff_rods_length" value="0.22"/>
+  <xacro:property name="wheel_radius" value="0.0352"/>
+  <xacro:property name="wheel_length" value="0.0206"/>
+  <xacro:property name="caster_wheel_radius" value="0.02"/>
+  <xacro:property name="caster_wheel_length" value="0.01"/>
+  <xacro:property name="joint_effort_limit" value="1000.0"/>
+  <xacro:property name="joint_velocity_limit" value="100.0"/>
+  <xacro:property name="damping_coefficient" value="0.0"/>
+  <xacro:property name="friction_coefficient" value="0.1"/>
+  <xacro:property name="box_laser_scan_width" value="0.035"/>
+  <xacro:property name="box_laser_scan_height" value="0.05"/>
+  <xacro:property name="box_laser_scan_depth" value="0.035"/>
+
+  <!-- Define base_link with visual, collision, and inertial properties -->
+  <link name="base_link">
+    <!-- Optionally add visual, collision, and inertial properties if needed -->
+  </link>
+
+  <!-- Macros -->
+  <!-- Macro for a Cylindrical Component -->
+  <xacro:macro name="cylinder_link" params="name radius length material mass parent_link xyz rpy joint_type axis">
+    <!-- Cylindrical Link -->
+    <link name="${name}">
+      <visual>
+        <geometry>
+          <cylinder radius="${radius}" length="${length}"/>
+        </geometry>
+        <material name="${material}"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="${radius}" length="${length}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="${mass}"/>
+        <origin xyz="0 0 0" />
+        <inertia
+          ixx="${(1.0/12.0) * mass * (3.0 * (radius * radius) + (length * length))}"
+          ixy="0.0"
+          ixz="0.0"
+          iyy="${(1.0/12.0) * mass * (3.0 * (radius * radius) + (length * length))}"
+          iyz="0.0"
+          izz="${(1.0/2.0) * mass * (radius * radius)}"/>
+      </inertial>
+    </link>
+    <!-- Joint to Attach to Parent -->
+    <joint name="${name}_joint" type="${joint_type}">
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <parent link="${parent_link}"/>
+      <child link="${name}"/>
+      <xacro:if value="${joint_type != 'fixed'}">
+        <axis xyz="${axis}"/>
+      </xacro:if>
+    </joint>
+  </xacro:macro>
+
+  <!-- Macro for Caster Wheel -->
+  <xacro:macro name="caster_wheel" params="name pos_x pos_y pos_z color_yaw color_pitch color_roll parent_link mass radius length">
+    <!-- Caster Wheel Link (Yaw) -->
+    <link name="${name}_yaw_link">
+      <visual>
+        <origin rpy="0 1.5707 1.5707" xyz="0 0 0"/>
+        <geometry>
+          <cylinder length="${length}" radius="${radius}"/>
+        </geometry>
+        <material name="${color_yaw}"/>
+      </visual>
+      <collision>
+        <origin rpy="0 1.5707 1.5707" xyz="0 0 0"/>
+        <geometry>
+          <cylinder length="${length}" radius="${radius}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin rpy="0 1.5707 1.5707" xyz="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia
+          ixx="${(1.0/4.0) * mass * (radius * radius) + (1.0/12.0) * mass * (length * length)}"
+          ixy="0.0"
+          ixz="0.0"
+          iyy="${(1.0/4.0) * mass * (radius * radius) + (1.0/12.0) * mass * (length * length)}"
+          iyz="0.0"
+          izz="${(1.0/2.0) * mass * (radius * radius)}"/>
+      </inertial>
+    </link>
+    <!-- Yaw Joint -->
+    <joint name="${name}_yaw_joint" type="continuous">
+      <origin rpy="0 1.5707 1.5707" xyz="${pos_x} ${pos_y} ${pos_z}" />
+      <parent link="${parent_link}"/>
+      <child link="${name}_yaw_link"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="${joint_effort_limit}" velocity="${joint_velocity_limit}"/>
+      <dynamics damping="${damping_coefficient}" friction="${friction_coefficient}"/>
+    </joint>
+
+    <!-- Caster Wheel (Roll) -->
+    <link name="${name}_roll_link">
+      <visual>
+        <origin rpy="0 1.5707 1.5707" xyz="0 0 0"/>
+        <geometry>
+          <cylinder length="${length}" radius="${radius}"/>
+        </geometry>
+        <material name="${color_roll}"/>
+      </visual>
+      <collision>
+        <origin rpy="0 1.5707 1.5707" xyz="0 0 0"/>
+        <geometry>
+          <cylinder length="${length}" radius="${radius}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin rpy="0 1.5707 1.5707" xyz="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia
+          ixx="${(1.0/4.0) * mass * (radius * radius) + (1.0/12.0) * mass * (length * length)}"
+          ixy="0.0"
+          ixz="0.0"
+          iyy="${(1.0/4.0) * mass * (radius * radius) + (1.0/12.0) * mass * (length * length)}"
+          iyz="0.0"
+          izz="${(1.0/2.0) * mass * (radius * radius)}"/>
+      </inertial>
+    </link>
+    <!-- Roll Joint -->
+    <joint name="${name}_roll_joint" type="continuous">
+      <origin rpy="0 1.5707 1.5707" xyz="0 0 0"/>
+      <parent link="${name}_yaw_link"/>
+      <child link="${name}_roll_link"/>
+      <axis xyz="1 0 0"/>
+      <limit effort="${joint_effort_limit}" velocity="${joint_velocity_limit}"/>
+      <dynamics damping="${damping_coefficient}" friction="${friction_coefficient}"/>
+    </joint>
+
+    <!-- Caster Wheel (Pitch) -->
+    <link name="${name}_pitch_link">
+      <visual>
+        <origin rpy="0 1.5707 1.5707" xyz="0 0 0"/>
+        <geometry>
+          <sphere radius="${radius}"/>
+        </geometry>
+        <material name="${color_pitch}"/>
+      </visual>
+      <collision>
+        <origin rpy="0 1.5707 1.5707" xyz="0 0 0"/>
+        <geometry>
+          <sphere radius="${radius}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin rpy="0 1.5707 1.5707" xyz="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia
+          ixx="${(2.0/5.0) * mass * (radius * radius)}"
+          ixy="0.0"
+          ixz="0.0"
+          iyy="${(2.0/5.0) * mass * (radius * radius)}"
+          iyz="0.0"
+          izz="${(2.0/5.0) * mass * (radius * radius)}"/>
+      </inertial>
+    </link>
+    <!-- Pitch Joint -->
+    <joint name="${name}_pitch_joint" type="continuous">
+      <origin rpy="0 1.5707 1.5707" xyz="0 0 0"/>
+      <parent link="${name}_roll_link"/>
+      <child link="${name}_pitch_link"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="${joint_effort_limit}" velocity="${joint_velocity_limit}"/>
+      <dynamics damping="${damping_coefficient}" friction="${friction_coefficient}"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Macro for Sensor LIDAR -->
+  <xacro:macro name="laser_sensor" params="name color width height depth mass parent_link xyz rpy joint_type axis">
+    <link name="lidar">
+      <visual>
+        <origin rpy="0 0 0" xyz="0 0 -0.05"/>
+        <geometry>
+          <mesh filename="package://barista_robot_description/meshes/hokuyo_urg_04lx.dae"/>
+        </geometry>
+        <material name="${color}"/>
+      </visual>
+      <collision>
+        <origin rpy="0 0 0" xyz="0 0 -0.05"/>
+        <geometry>
+          <mesh filename="package://barista_robot_description/meshes/hokuyo_urg_04lx.dae"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="${mass}"/>
+        <origin xyz="0 0 0"/>
+        <inertia
+          ixx="${(1.0/12.0) * mass * (height * height + depth * depth)}"
+          ixy="0.0"
+          ixz="0.0"
+          iyy="${(1.0/12.0) * mass * (width * width + depth * depth)}"
+          iyz="0.0"
+          izz="${(1.0/12.0) * mass * (width * width + height * height)}"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="${joint_type}">
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <parent link="${parent_link}"/>
+      <child link="${name}"/>
+    </joint>
+
+    <!-- Laser Sensor Plugin -->
+    <gazebo reference="${name}">
+      <sensor name="sensor_ray" type="ray">
+        <pose>0 0 0 0 0 0</pose>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>200</samples>
+              <resolution>1.0</resolution>
+              <min_angle>-3.14</min_angle>
+              <max_angle>3.14</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>0.1</min>
+            <max>5.0</max>
+          </range>
+        </ray>
+        <visualize>true</visualize>
+        <always_on>true</always_on>
+        <update_rate>100.0</update_rate>
+        <plugin name="laser" filename="libgazebo_ros_ray_sensor.so">
+          <ros>
+            <namespace>/barista_robot</namespace>
+            <remapping>~/out:=scan</remapping>
+          </ros>
+          <output_type>sensor_msgs/LaserScan</output_type>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Create Chassis -->
+  <xacro:cylinder_link name="chassis"
+                      radius="${body_radius}"
+                      length="${body_length}"
+                      material="LightNavyBlue"
+                      mass="0.5"
+                      parent_link="base_link"
+                      xyz="0 0 0.0975"
+                      rpy="0 0 0"
+                      joint_type="fixed"
+                      axis="0 0 0"/>
+
+  <gazebo reference="chassis">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <!-- Create Cup Holder Tray -->
+  <xacro:cylinder_link name="cup_holder_tray"
+                      radius="${cup_holder_tray_radius}"
+                      length="${cup_holder_tray_length}"
+                      material="LightNavyBlue"
+                      mass="0.2"
+                      parent_link="chassis"
+                      xyz="0 0 0.3425"
+                      rpy="0 0 0"
+                      joint_type="fixed"
+                      axis="0 0 0"/>
+  
+  <gazebo reference="cup_holder_tray">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <!-- Create Standoff Rods -->
+  <xacro:cylinder_link name="standoff_rod_1"
+                      radius="${standoff_rods_radius}"
+                      length="${standoff_rods_length}"
+                      material="White"
+                      mass="0.07"
+                      parent_link="chassis"
+                      xyz="0.05 0.12 0.1875"
+                      rpy="0 0 0"
+                      joint_type="fixed"
+                      axis="0 0 0"/>
+
+  <xacro:cylinder_link name="standoff_rod_2"
+                      radius="${standoff_rods_radius}"
+                      length="${standoff_rods_length}"
+                      material="White"
+                      mass="0.07"
+                      parent_link="chassis"
+                      xyz="-0.05 0.12 0.1875"
+                      rpy="0 0 0"
+                      joint_type="fixed"
+                      axis="0 0 0"/>
+
+  <xacro:cylinder_link name="standoff_rod_3"
+                      radius="${standoff_rods_radius}"
+                      length="${standoff_rods_length}"
+                      material="White"
+                      mass="0.07"
+                      parent_link="chassis"
+                      xyz="0.05 -0.12 0.1875"
+                      rpy="0 0 0"
+                      joint_type="fixed"
+                      axis="0 0 0"/>
+
+  <xacro:cylinder_link name="standoff_rod_4"
+                      radius="${standoff_rods_radius}"
+                      length="${standoff_rods_length}"
+                      material="White"
+                      mass="0.07"
+                      parent_link="chassis"
+                      xyz="-0.05 -0.12 0.1875"
+                      rpy="0 0 0"
+                      joint_type="fixed"
+                      axis="0 0 0"/>
+
+  <gazebo reference="standoff_rod_1">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <gazebo reference="standoff_rod_2">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="standoff_rod_3">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="standoff_rod_4">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <!-- Wheels -->
+  <xacro:cylinder_link name="wheel_right"
+                      radius="${wheel_radius}"
+                      length="${wheel_length}"
+                      material="Black"
+                      mass="0.1"
+                      parent_link="chassis"
+                      xyz="0 -0.12 -0.0623"
+                      rpy="0 1.5708 1.5708"
+                      joint_type="continuous"
+                      axis="0 0 1"/>
+
+  <xacro:cylinder_link name="wheel_left"
+                      radius="${wheel_radius}"
+                      length="${wheel_length}"
+                      material="Black"
+                      mass="0.1"
+                      parent_link="chassis"
+                      xyz="0 0.12 -0.0623"
+                      rpy="0 1.5708 1.5708"
+                      joint_type="continuous"
+                      axis="0 0 1"/>
+
+  <!-- Gazebo configuration for Wheels -->
+  <gazebo reference="wheel_right">
+    <kp>1000000000000000000000000000.0</kp>
+    <kd>1000000000000000000000000000.0</kd>
+    <mu1>0.8</mu1>
+    <mu2>0.8</mu2>
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <gazebo reference="wheel_left">
+    <kp>1000000000000000000000000000.0</kp>
+    <kd>1000000000000000000000000000.0</kd>
+    <mu1>0.8</mu1>
+    <mu2>0.8</mu2>
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <!-- Caster Wheels -->
+  <xacro:caster_wheel name="front_caster_wheel"
+                      parent_link="chassis"
+                      radius="${caster_wheel_radius}"
+                      length="${caster_wheel_length}"
+                      pos_x="0.11" pos_y="0" pos_z="-0.0775"
+                      color_yaw="Red"
+                      color_roll="Green"
+                      color_pitch="Yellow"
+                      mass="0.07"/>
+
+  <xacro:caster_wheel name="back_caster_wheel"
+                      parent_link="chassis"
+                      radius="${caster_wheel_radius}"
+                      length="${caster_wheel_length}"
+                      pos_x="-0.11" pos_y="0" pos_z="-0.0775"
+                      color_yaw="Red"
+                      color_roll="Green"
+                      color_pitch="Yellow"
+                      mass="0.07"/>
+
+  <!-- Gazebo configuration for Caster Wheels -->
+
+  <gazebo reference="front_caster_wheel_yaw_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
+  <gazebo reference="back_caster_wheel_yaw_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
+  <gazebo reference="front_caster_wheel_roll_link">
+    <material>Gazebo/Green</material>
+  </gazebo>
+
+  <gazebo reference="back_caster_wheel_roll_link">
+    <material>Gazebo/Green</material>
+  </gazebo>
+  
+  <gazebo reference="front_caster_wheel_pitch_link">
+    <kp>1000000000000000000000000000.0</kp>
+    <kd>1000000000000000000000000000.0</kd>
+    <mu1>0.5</mu1>
+    <mu2>0.5</mu2>
+    <material>Gazebo/Yellow</material>
+  </gazebo>
+
+  <gazebo reference="back_caster_wheel_pitch_link">
+    <kp>1000000000000000000000000000.0</kp>
+    <kd>1000000000000000000000000000.0</kd>
+    <mu1>0.5</mu1>
+    <mu2>0.5</mu2>
+    <material>Gazebo/Yellow</material> 
+  </gazebo>
+  
+
+  <!-- Plugin -->
+
+  <!-- Joint State Publisher -->
+  <gazebo>
+    <plugin name="barista_robot_joint_state" filename="libgazebo_ros_joint_state_publisher.so">
+      <ros>
+        <remapping>~/out:=joint_state</remapping>
+      </ros>
+      <update_rate>30</update_rate>
+     
+      <joint_name>wheel_left_joint</joint_name>
+      <joint_name>wheel_right_joint</joint_name>
+      <joint_name>front_caster_wheel_yaw_joint</joint_name>
+      <joint_name>back_caster_wheel_yaw_joint</joint_name>
+      <joint_name>front_caster_wheel_roll_joint</joint_name>
+      <joint_name>back_caster_wheel_roll_joint</joint_name>
+      <joint_name>front_caster_wheel_pitch_joint</joint_name>
+      <joint_name>back_caster_wheel_pitch_joint</joint_name>
+      
+    </plugin>
+  </gazebo>
+
+  <!-- Differential Drive Plugin -->
+  <gazebo>
+    <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+      <!-- Wheels -->
+      <left_joint>wheel_left_joint</left_joint>
+      <right_joint>wheel_right_joint</right_joint>
+
+      <!-- Kinematics -->
+      <wheel_separation>0.24</wheel_separation>
+      <wheel_diameter>0.0704</wheel_diameter>
+
+      <!-- Limits -->
+      <max_wheel_torque>0.5</max_wheel_torque>
+      <max_wheel_acceleration>2.0</max_wheel_acceleration>
+      
+      <!-- Output -->
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>true</publish_odom_tf>
+
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>base_link</robot_base_frame>
+    </plugin>
+  </gazebo>
+
+  <!-- LIDAR Laser Plugin -->
+  <xacro:laser_sensor 
+    name="lidar"
+    color="Gray"
+    width="${box_laser_scan_width}"
+    height="${box_laser_scan_height}"
+    depth="${box_laser_scan_depth}"
+    mass="0.05"
+    parent_link="chassis"
+    xyz="0.12 0 0.125"
+    rpy="0 0 0"
+    joint_type="fixed"
+    axis="0 0 0"/>
+  
+  <gazebo reference="lidar">
+    <material>Gazebo/Gray</material>
+  </gazebo>
+
+</robot>
