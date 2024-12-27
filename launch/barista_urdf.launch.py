@@ -13,17 +13,16 @@ from ament_index_python.packages import get_package_prefix
 # this is the function launch  system will look for
 def generate_launch_description():
 
-    ####### DATA INPUT ##########
+    # DATA INPUT 
     urdf_file = 'barista_robot_model.urdf'
 
     package_description = "barista_robot_description"
 
-    ####### DATA INPUT END ##########
+    # DATA INPUT END
     print("Fetching URDF ==>")
     robot_desc_path = os.path.join(get_package_share_directory(package_description), "urdf", urdf_file)
 
     # Gazebo input data
-
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
     pkg_barista_gazebo = get_package_share_directory('barista_robot_description')
 
@@ -43,15 +42,12 @@ def generate_launch_description():
     else:
         os.environ['GAZEBO_PLUGIN_PATH'] = install_dir + '/lib'
 
-    
-
     print("GAZEBO MODELS PATH=="+str(os.environ["GAZEBO_MODEL_PATH"]))
     print("GAZEBO PLUGINS PATH=="+str(os.environ["GAZEBO_PLUGIN_PATH"]))
 
     # Gazebo launch
     gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, 'launch', 'gazebo.launch.py'),
+        PythonLaunchDescriptionSource(os.path.join(pkg_gazebo_ros, 'launch', 'gazebo.launch.py'),
         )
     )    
     # Robot State Publisher
@@ -67,14 +63,14 @@ def generate_launch_description():
     # RVIZ Configuration
     rviz_config_dir = os.path.join(get_package_share_directory(package_description), 'rviz', 'barista_robot.rviz')
 
-
     rviz_node = Node(
-            package='rviz2',
-            executable='rviz2',
-            output='screen',
-            name='rviz_node',
-            parameters=[{'use_sim_time': True}],
-            arguments=['-d', rviz_config_dir])
+        package='rviz2',
+        executable='rviz2',
+        output='screen',
+        name='rviz_node',
+        parameters=[{'use_sim_time': True}],
+        arguments=['-d', rviz_config_dir]
+    )
 
 
     # Position and orientation

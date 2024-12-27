@@ -7,6 +7,8 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(gazebo_ros REQUIRED)
+find_package(urdf REQUIRED)
 find_package(xacro REQUIRED)
 
 # uncomment the following section in order to fill in
@@ -29,8 +31,9 @@ install(DIRECTORY
     urdf
     rviz
     launch
-		meshes
-		worlds
+	meshes
+	worlds
+	xacro
   	DESTINATION
     	share/${PROJECT_NAME}/
 )
