@@ -59,9 +59,8 @@
   <xacro:property name="wheel_length" value="0.0206"/>
   <xacro:property name="caster_wheel_radius" value="0.02"/>
   <xacro:property name="caster_wheel_length" value="0.01"/>
-  <xacro:property name="box_laser_scan_width" value="0.035"/>
-  <xacro:property name="box_laser_scan_height" value="0.05"/>
-  <xacro:property name="box_laser_scan_depth" value="0.035"/>
+  <xacro:property name="cylinder_laser_scan_length" value="0.048"/>
+  <xacro:property name="cylinder_laser_scan_radius" value="0.03"/>
 
   <!-- Define base link -->
   <link name="base_link">
@@ -476,21 +475,20 @@
   </gazebo>
 
   <xacro:if value="${include_laser}">
-    <xacro:laser_scanner
+    <xacro:laser_scanner 
       name="lidar"
       color="Gray"
-      width="${box_laser_scan_width}"
-      height="${box_laser_scan_height}"
-      depth="${box_laser_scan_depth}"
+      length="${cylinder_laser_scan_length}"
+      radius="${cylinder_laser_scan_radius}"
       mass="0.05"
       parent_link="chassis"
-      xyz="0.12 0 0.125"
+      xyz="0.12 0 0.08"
       rpy="0 0 0"
       joint_type="fixed"
       axis="0 0 0"/>
   </xacro:if>
     
-    <!-- Gazebo Configuration for Laser -->
+  <!-- Gazebo Configuration for Laser -->
   <xacro:if value= "${include_laser}">
     <gazebo reference="lidar">
       <material>Gazebo/Gray</material>

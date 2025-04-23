@@ -63,7 +63,7 @@ def generate_launch_description():
         executable='robot_state_publisher',
         name='robot_state_publisher_node',
         emulate_tty=True,
-        parameters=[{ 'use_sim_time': True,
+        parameters=[{'use_sim_time': True,
                      'robot_description': Command(['xacro ', xacro_path,' include_laser:=', include_laser])}],
         output='screen'
     )

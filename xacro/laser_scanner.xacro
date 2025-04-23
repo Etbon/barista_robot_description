@@ -2,31 +2,32 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!-- Macro for a Laser Scanner -->
   <!-- Macro for Sensor LIDAR -->
-  <xacro:macro name="laser_scanner" params="name color width height depth mass parent_link xyz rpy joint_type axis">
+   <!-- Macro for Sensor LIDAR -->
+  <xacro:macro name="laser_scanner" params="name color length radius mass parent_link xyz rpy joint_type axis">
     <link name="${name}">
       <visual>
-        <origin rpy="0 0 0" xyz="0 0 -0.05"/>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>
-          <mesh filename="package://barista_robot_description/meshes/hokuyo_urg_04lx.dae"/>
+          <mesh filename="package://barista_robot_description/meshes/hokuyo_urg_04lx.dae" scale="1.0 1.0 1.0"/>
         </geometry>
         <material name="${color}"/>
       </visual>
       <collision>
-        <origin rpy="0 0 0" xyz="0 0 -0.05"/>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>
-          <mesh filename="package://barista_robot_description/meshes/hokuyo_urg_04lx.dae"/>
+          <cylinder length="${length}" radius="${radius}"/>
         </geometry>
       </collision>
       <inertial>
         <mass value="${mass}"/>
         <origin xyz="0 0 0"/>
         <inertia
-          ixx="${(1.0/12.0) * mass * (height * height + depth * depth)}"
+          ixx="${(1.0/12.0) * mass * (3.0 * (radius * radius) + (length * length))}"
           ixy="0.0"
           ixz="0.0"
-          iyy="${(1.0/12.0) * mass * (width * width + depth * depth)}"
+          iyy="${(1.0/12.0) * mass * (3.0 * (radius * radius) + (length * length))}"
           iyz="0.0"
-          izz="${(1.0/12.0) * mass * (width * width + height * height)}"/>
+          izz="${(1.0/2.0) * mass * (radius * radius)}"/>
       </inertial>
     </link>
 
@@ -35,15 +36,23 @@
       <parent link="${parent_link}"/>
       <child link="${name}"/>
     </joint>
+    
+    <!-- Ray frame link -->
+    <link name="${name}_ray_link"/>
+    <joint name="${name}_ray_joint" type="fixed">
+      <origin xyz="0 0 ${length}" rpy="0 0 0"/>
+      <parent link="${name}"/>
+      <child link="${name}_ray_link"/>
+    </joint>
 
     <!-- Laser Sensor Plugin -->
-    <gazebo reference="${name}">
-      <sensor name="sensor_ray" type="ray">
+    <gazebo reference="${name}_ray_link">
+      <sensor name="${name}_sensor" type="ray">
         <pose>0 0 0 0 0 0</pose>
         <ray>
           <scan>
             <horizontal>
-              <samples>200</samples>
+              <samples>720</samples>
               <resolution>1.0</resolution>
               <min_angle>-3.14</min_angle>
               <max_angle>3.14</max_angle>
@@ -56,12 +65,13 @@
         </ray>
         <visualize>true</visualize>
         <always_on>true</always_on>
-        <update_rate>100.0</update_rate>
-        <plugin name="laser" filename="libgazebo_ros_ray_sensor.so">
+        <update_rate>50.0</update_rate>
+        <plugin name="${name}_gazebo_plugin" filename="libgazebo_ros_ray_sensor.so">
           <ros>
-            <remapping>~/out:=/scan</remapping>
+            <remapping>~/out:=scan</remapping>
           </ros>
           <output_type>sensor_msgs/LaserScan</output_type>
+          <frame_name>${name}_ray_link</frame_name>
         </plugin>
       </sensor>
     </gazebo>
