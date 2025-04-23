@@ -216,7 +216,7 @@
 
   <!-- Macro for Sensor LIDAR -->
   <xacro:macro name="laser_sensor" params="name color length radius mass parent_link xyz rpy joint_type axis">
-    <link name="lidar">
+    <link name="${name}">
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0"/>
         <geometry>

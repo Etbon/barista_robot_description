@@ -9,6 +9,8 @@ from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_prefix
+from launch.actions import TimerAction, RegisterEventHandler
+from launch.event_handlers import OnProcessStart
 
 # this is the function launch  system will look for
 def generate_launch_description():
@@ -50,28 +52,6 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(pkg_gazebo_ros, 'launch', 'gazebo.launch.py'),
         )
     )    
-    # Robot State Publisher
-    robot_state_publisher_node = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        name='robot_state_publisher_node',
-        emulate_tty=True,
-        parameters=[{'use_sim_time': True, 'robot_description': Command(['xacro ', robot_desc_path])}],
-        output="screen"
-    )
-
-    # RVIZ Configuration
-    rviz_config_dir = os.path.join(get_package_share_directory(package_description), 'rviz', 'barista_robot.rviz')
-
-    rviz_node = Node(
-        package='rviz2',
-        executable='rviz2',
-        output='screen',
-        name='rviz_node',
-        parameters=[{'use_sim_time': True}],
-        arguments=['-d', rviz_config_dir]
-    )
-
 
     # Position and orientation
     # [X, Y, Z]
@@ -101,6 +81,33 @@ def generate_launch_description():
                    ]
     )
 
+    # Robot State Publisher
+    robot_state_publisher_node = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher_node',
+        emulate_tty=True,
+        parameters=[{'use_sim_time': True, 'robot_description': Command(['xacro ', robot_desc_path])}],
+        output="screen"
+    )
+
+    # RVIZ Configuration
+    rviz_config_dir = os.path.join(get_package_share_directory(package_description), 'rviz', 'barista_robot.rviz')
+
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        output='screen',
+        name='rviz_node',
+        parameters=[{'use_sim_time': True}],
+        arguments=['-d', rviz_config_dir]
+    )
+
+    delayed_rviz = TimerAction(
+       period=5.0,
+       actions=[ rviz_node ]
+    )
+
     # create and return launch description object
     return LaunchDescription(
         [   
@@ -109,8 +116,8 @@ def generate_launch_description():
           default_value=[os.path.join(pkg_barista_gazebo, 'worlds', 'barista_robot_empty.world'), ''],
           description='SDF world file'),         
             robot_state_publisher_node,
-            rviz_node,
+            gazebo,
             spawn_robot,
-            gazebo
+            delayed_rviz
         ]
     )
