@@ -8,40 +8,7 @@ This project implements a modular robot description in ROS 2 using both URDF and
 - Basic URDF creation
 - Modular Xacro refactor
 - Launch integration for Gazebo and RViz
-
----
-
-##  Initial Setup
-
-Clone the auxiliary repository (meshes):
-```bash
-cd ~/ros2_ws/src
-git clone https://bitbucket.org/theconstructcore/checkpoint4_auxiliary_files.git
-```
-
-Create the robot description package:
-```bash
-cd ~/ros2_ws/src
-ros2 pkg create barista_robot_description
-```
-
-Initialize Git:
-```bash
-cd ~/ros2_ws/src/barista_robot_description
-git init
-git config --global user.name "Your Name"
-git config --global user.email "your@email.com"
-```
-
-Add the drawing and .gitignore:
-```bash
-cp ~/ros2_ws/src/checkpoint4_auxiliary_files/meshes/barista_robot_drawing.png .
-echo "barista_robot_drawing.png" > .gitignore
-git add .
-git commit -m "Initial commit with image and .gitignore"
-git tag initial-tag
-```
-
+  
 ---
 ## ✅ Part 1 - Base Robot Model (URDF)
 
@@ -88,13 +55,6 @@ ros2 launch barista_robot_description barista_xacro.launch.py
 - RViz shows sensor TF tree
 - `/scan` and `/odom` data published
 
-### ⚖️ Tag
-```bash
-git add .
-git commit -m "Convert URDF to modular Xacro with conditional laser"
-git tag part2
-git push origin part2
-```
 ---
 ## 🧪 Topics to Test
 ```bash
