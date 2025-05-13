@@ -1,8 +1,16 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="barista_robot">
 
-  <!-- Arguments -->
+  <!-- Argument -->
+  <xacro:arg name="robot_name" default=""/>
+  <xacro:arg name="color" default=""/>
+  <xacro:arg name="include_laser" default="true"/>
+  <xacro:arg name="plugin_ns" default=""/>
+
+  <!-- Property -->
   <xacro:property name="include_laser" value="$(arg include_laser)"/>
+  <xacro:property name="robot_name" value="$(arg robot_name)"/>
+  <xacro:property name="color" value="$(arg color)"/>
 
   <!-- Included tags -->
   <xacro:include filename="$(find barista_robot_description)/xacro/cup_holder_tray.xacro"/>
@@ -73,7 +81,7 @@
       <geometry>
         <cylinder length="${body_length}" radius="${body_radius}"/>
       </geometry>
-      <material name="LightNavyBlue"/>
+      <material name="$(arg color)"/>
     </visual>
     <collision>
       <geometry>
@@ -95,7 +103,7 @@
   </joint>
 
   <gazebo reference="chassis">
-    <material>Gazebo/Blue</material>
+    <material>Gazebo/$(arg color)</material>
   </gazebo>
 
   <!-- Cup Holder Tray -->
@@ -103,7 +111,7 @@
     name="cup_holder_tray"
     radius="${cup_holder_tray_radius}"
     length="${cup_holder_tray_length}"
-    material="LightNavyBlue"
+    material="$(arg color)"
     mass="0.2"
     parent_link="chassis"
     xyz="0 0 0.3425"
@@ -112,7 +120,7 @@
     axis="0 0 0"/>
 
   <gazebo reference="cup_holder_tray">
-    <material>Gazebo/Blue</material>
+    <material>Gazebo/$(arg color)</material>
   </gazebo>
 
   <!-- Standoff Rods -->
@@ -188,7 +196,7 @@
     material="Black"
     mass="0.1"
     parent_link="chassis"
-    xyz="0 -0.12 -0.0623"
+    xyz="0 -0.12 -0.0630"
     rpy="0 1.5708 1.5708"
     joint_type="continuous"
     axis="0 0 1"/>
@@ -200,23 +208,23 @@
     material="Black"
     mass="0.1"
     parent_link="chassis"
-    xyz="0 0.12 -0.0623"
+    xyz="0 0.12 -0.0630"
     rpy="0 1.5708 1.5708"
     joint_type="continuous"
     axis="0 0 1"/>
   
   <!-- Gazebo configuration for Wheels -->
   <gazebo reference="wheel_right">
-    <kp>1000000000000000000000000000.0</kp>
-    <kd>1000000000000000000000000000.0</kd>
+    <kp>1000000000.0</kp>
+    <kd>1000000000.0</kd>
     <mu1>0.8</mu1>
     <mu2>0.8</mu2>
     <material>Gazebo/Black</material>
   </gazebo>
 
   <gazebo reference="wheel_left">
-    <kp>1000000000000000000000000000.0</kp>
-    <kd>1000000000000000000000000000.0</kd>
+    <kp>1000000000.0</kp>
+    <kd>1000000000.0</kd>
     <mu1>0.8</mu1>
     <mu2>0.8</mu2>
     <material>Gazebo/Black</material>
@@ -418,15 +426,15 @@
   </gazebo>
 
   <gazebo reference="front_caster_wheel_pitch_link">
-    <kp>1000000000000000000000000000.0</kp>
-    <kd>1000000000000000000000000000.0</kd>
+    <kp>10000000000.0</kp>
+    <kd>10000000000.0</kd>
     <mu1>0.5</mu1>
     <mu2>0.5</mu2>
     <material>Gazebo/Yellow</material>
   </gazebo>
   <gazebo reference="back_caster_wheel_pitch_link">
-    <kp>1000000000000000000000000000.0</kp>
-    <kd>1000000000000000000000000000.0</kd>
+    <kp>1000000000.0</kp>
+    <kd>1000000000.0</kd>
     <mu1>0.5</mu1>
     <mu2>0.5</mu2>
     <material>Gazebo/Yellow</material>
@@ -455,6 +463,7 @@
     <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
       <ros>
         <remapping>/out:=cmd_vel</remapping>
+        <namespace>$(arg plugin_ns)</namespace>
       </ros>
 
       <!-- Wheels -->
@@ -469,8 +478,8 @@
       <!-- Output -->
       <publish_odom>true</publish_odom>
       <publish_odom_tf>true</publish_odom_tf>
-      <odometry_frame>odom</odometry_frame>
-      <robot_base_frame>base_link</robot_base_frame>
+      <odometry_frame>$(arg robot_name)/odom</odometry_frame>
+      <robot_base_frame>$(arg robot_name)/base_link</robot_base_frame>
     </plugin>
   </gazebo>
 

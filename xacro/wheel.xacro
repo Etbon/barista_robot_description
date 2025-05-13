@@ -4,7 +4,7 @@
   <!-- Properties -->
   <xacro:property name="joint_effort_limit" value="1000.0"/>
   <xacro:property name="joint_velocity_limit" value="100.0"/>
-  <xacro:property name="damping_coefficient" value="0.0"/>
+  <xacro:property name="damping_coefficient" value="0.02"/>
   <xacro:property name="friction_coefficient" value="0.1"/>
   
   <!-- Macro for a Wheel Component -->
